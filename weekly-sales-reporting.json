@@ -1,0 +1,378 @@
+{
+  "name": "Weekly Sales Reporting",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        112
+      ],
+      "id": "59cf2628-0c06-403e-968b-1b204cb101fe",
+      "name": "Trigger Manually"
+    },
+    {
+      "parameters": {
+        "url": "https://learn.app.n8n.cloud/webhook/courses/n8n-quickstart/company-warehouse",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-assessment-id",
+              "value": "2fb1bd93fffafa133e0af0fd8adc1cc5"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        176,
+        -32
+      ],
+      "id": "399a365d-262a-400d-a910-81c38bb30770",
+      "name": "GetDataFromWarehouse",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Ml7TF41jBCevn6sU",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "q7Wrc8JkVxczwwAz",
+          "mode": "list",
+          "cachedResultName": "orders",
+          "cachedResultUrl": "/projects/bYr1snOte38CivvH/datatables/q7Wrc8JkVxczwwAz"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "orderID",
+              "keyValue": "={{ $json.orderID }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "orderID",
+              "displayName": "orderID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customerID",
+              "displayName": "customerID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "employeeName",
+              "displayName": "employeeName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "orderPrice",
+              "displayName": "orderPrice",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "orderStatus",
+              "displayName": "orderStatus",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1360,
+        0
+      ],
+      "id": "9e4aa7ff-3783-4eaa-ab81-254cf434e291",
+      "name": "UpsertOrders"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "883e72ee-aff8-455c-bd48-61814777826d",
+              "leftValue": "={{ $json.orderStatus }}",
+              "rightValue": "=processing",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "dcada41a-9604-4857-acde-853e63327109",
+              "leftValue": "={{ $json.employeeName }}",
+              "rightValue": "Mario",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {
+          "ignoreCase": false
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        416,
+        -32
+      ],
+      "id": "7cd3cd0b-81f6-4f99-893c-b513039c2c15",
+      "name": "CheckOrderStatus"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8cc12d97-5992-449c-95e8-31d9efeb7176",
+              "name": "orderID",
+              "value": "={{ $json.orderID }}",
+              "type": "number"
+            },
+            {
+              "id": "2dcb9387-716f-42f9-89da-1ee6ef4fa46f",
+              "name": "employeeName",
+              "value": "={{ $json.employeeName }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        976,
+        -288
+      ],
+      "id": "2e753d5e-bc17-459b-9c92-85e43639d8a3",
+      "name": "SetProcessingData"
+    },
+    {
+      "parameters": {
+        "jsCode": "let items = $input.all(); let totalBooked = items.length; let bookedSum = 0; for (let i=0; i < items.length; i++) { bookedSum = bookedSum + items[i].json.orderPrice; } return [{ json: {totalBooked, bookedSum} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        208
+      ],
+      "id": "17a3f9bf-6c1e-49e3-a025-98e3d7e98d37",
+      "name": " CalculateBookedOrders"
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "=This week we've {{$json.totalBooked}} booked orders with a total value of {{$json.bookedSum.round(2)}}. My Assessment ID: {{ $('GetDataFromWarehouse').params.headerParameters.parameters[0].value }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        960,
+        0
+      ],
+      "id": "5be698c0-46b2-4e52-844a-7eeb07a70345",
+      "name": "Discord",
+      "webhookId": "fce3e554-75b3-47fe-955b-0dde0294ff10",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "3j6JU725LIFaViRr",
+          "name": "n8n Quickstart S1 Discord Webhook account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                1
+              ],
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -304,
+        -208
+      ],
+      "id": "c45cd220-c1ff-4b6b-806e-ed1f7387b313",
+      "name": "TriggerMondays9am"
+    },
+    {
+      "parameters": {
+        "jsCode": "let items = $input.all(); let totalBooked = items.length; let bookedSum = 0; for (let i=0; i < items.length; i++) { bookedSum = bookedSum + items[i].json.orderPrice; } return [{ json: {totalBooked, bookedSum} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        -304
+      ],
+      "id": "d514f7ac-a8a2-49ac-a8fd-6d1953f35eec",
+      "name": "CalculateBookedProcessingOrders"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Trigger Manually": {
+      "main": [
+        [
+          {
+            "node": "GetDataFromWarehouse",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GetDataFromWarehouse": {
+      "main": [
+        [
+          {
+            "node": "CheckOrderStatus",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CheckOrderStatus": {
+      "main": [
+        [
+          {
+            "node": "SetProcessingData",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "CalculateBookedProcessingOrders",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": " CalculateBookedOrders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    " CalculateBookedOrders": {
+      "main": [
+        [
+          {
+            "node": "Discord",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Discord": {
+      "main": [
+        [
+          {
+            "node": "UpsertOrders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TriggerMondays9am": {
+      "main": [
+        [
+          {
+            "node": "GetDataFromWarehouse",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "timezone": "Asia/Colombo",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "b69891cd-1123-434e-8b4d-9c840fc23165",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "47fee79f797cbd62499c5b9656996086b5143ff41a1b69af9402d5f6b6fa9f99"
+  },
+  "id": "3d1QFelvpaACjhPV",
+  "tags": []
+}
